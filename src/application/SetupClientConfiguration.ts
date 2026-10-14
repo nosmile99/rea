@@ -683,10 +683,24 @@ const clientConfigurationDesired = (
     "fragment",
   );
   if (!environment.ok) throw environment.error;
+  // Moonshot's function-calling API rejects any tool whose parameters schema
+  // exceeds its size cap, which the default (full) catalog always does; Kimi
+  // Code registrations default to the compact input-schema profile so prompts
+  // work out of the box. An explicitly configured profile is never
+  // overridden (#3654).
+  const registrationEnvironment: Record<string, string> = {
+    ...environment.value,
+  };
+  if (
+    client.name === "kimi" &&
+    registrationEnvironment.REA_MCP_INPUT_SCHEMA_PROFILE === undefined
+  ) {
+    registrationEnvironment.REA_MCP_INPUT_SCHEMA_PROFILE = "compact";
+  }
   const registration = clientRegistrationEntry(
     format,
     launcher,
-    environment.value,
+    registrationEnvironment,
   );
   const previous = parsed?.servers[PRODUCT_IDENTITY.mcpServerKey];
   if (
